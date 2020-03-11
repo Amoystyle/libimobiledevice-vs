@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{f3bd7fe8-9d49-463c-8100-8448059d7e73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{4e9038c3-5a3c-4964-9e0d-b4f909ee6772}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\common\debug.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\common\socket.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\common\thread.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\common\userpref.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\common\utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\afc.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\debugserver.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\device_link_service.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\diagnostics_relay.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\file_relay.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\heartbeat.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\house_arrest.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\idevice.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\installation_proxy.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\lockdown.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\misagent.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\mobile_image_mounter.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\mobileactivation.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\mobilebackup.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\mobilebackup2.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\mobilesync.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\notification_proxy.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\preboard.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\property_list_service.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\restore.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\sbservices.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\screenshotr.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\service.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\syslog_relay.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="libimobiledevice\src\webinspector.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\common\debug.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\common\socket.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\common\thread.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\common\userpref.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\common\utils.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\afc.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\debugserver.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\device_link_service.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\diagnostics_relay.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\file_relay.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\heartbeat.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\house_arrest.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\idevice.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\installation_proxy.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\lockdown.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\misagent.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\mobile_image_mounter.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\mobileactivation.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\mobilebackup.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\mobilebackup2.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\mobilesync.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\notification_proxy.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\preboard.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\property_list_service.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\restore.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\sbservices.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\screenshotr.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\service.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\syslog_relay.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="libimobiledevice\src\webinspector.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libimobiledevice.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
