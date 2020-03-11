@@ -1,4 +1,4 @@
-# libimobiledevice dll for windows
+# libimobiledevice dynamic library for windows
 
 ## 包含项目
 
