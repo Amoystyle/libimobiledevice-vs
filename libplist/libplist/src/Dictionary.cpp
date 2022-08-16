@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <plist/Dictionary.h>
 
 namespace PList
@@ -50,7 +50,7 @@ Dictionary::Dictionary(plist_t node, Node* parent) : Structure(parent)
     dictionary_fill(this, _map, _node);
 }
 
-Dictionary::Dictionary(const PList::Dictionary& d) : Structure()
+Dictionary::Dictionary(const PList::Dictionary& d)
 {
     for (Dictionary::iterator it = _map.begin(); it != _map.end(); it++)
     {
@@ -179,4 +179,4 @@ std::string Dictionary::GetNodeKey(Node* node)
     return "";
 }
 
-};
+}  // namespace PList

@@ -22,6 +22,7 @@
  */
 
 
+#define _GNU_SOURCE 1
 #include <string.h>
 #include "plist.h"
 #include <stdlib.h>
@@ -29,9 +30,11 @@
 #include <math.h>
 #include <assert.h>
 #include <limits.h>
+#include <float.h>
 
 #ifdef WIN32
 #include <windows.h>
+#define strdup _strdup
 #else
 #include <pthread.h>
 #endif
@@ -58,7 +61,6 @@ static void internal_plist_deinit(void)
 }
 
 #ifdef WIN32
-
 typedef volatile struct {
     LONG lock;
     int state;
@@ -79,20 +81,20 @@ void plist_thread_once(thread_once_t *once_control, void (*init_routine)(void))
     InterlockedExchange(&(once_control->lock), 0);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
-{
-    switch (dwReason) {
-    case DLL_PROCESS_ATTACH:
-        plist_thread_once(&init_once, internal_plist_init);
-        break;
-    case DLL_PROCESS_DETACH:
-        plist_thread_once(&deinit_once, internal_plist_deinit);
-        break;
-    default:
-        break;
-    }
-    return 1;
-}
+//BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
+//{
+//    switch (dwReason) {
+//    case DLL_PROCESS_ATTACH:
+//        thread_once(&init_once, internal_plist_init);
+//        break;
+//    case DLL_PROCESS_DETACH:
+//        thread_once(&deinit_once, internal_plist_deinit);
+//        break;
+//    default:
+//        break;
+//    }
+//    return 1;
+//}
 
 #else
 
@@ -111,6 +113,55 @@ static void __attribute__((destructor)) libplist_deinitialize(void)
 
 #endif
 
+#ifndef HAVE_MEMMEM
+// see https://sourceware.org/legacy-ml/libc-alpha/2007-12/msg00000.html
+
+#ifndef _LIBC
+# define __builtin_expect(expr, val)   (expr)
+#endif
+
+#undef memmem
+
+/* Return the first occurrence of NEEDLE in HAYSTACK. */
+void* memmem(const void* haystack, size_t haystack_len, const void* needle, size_t needle_len)
+{
+    /* not really Rabin-Karp, just using additive hashing */
+    char* haystack_ = (char*)haystack;
+    char* needle_ = (char*)needle;
+    int hash = 0;  /* this is the static hash value of the needle */
+    int hay_hash = 0;  /* rolling hash over the haystack */
+    char* last;
+    size_t i;
+
+    if (haystack_len < needle_len)
+        return NULL;
+
+    if (!needle_len)
+        return haystack_;
+
+    /* initialize hashes */
+    for (i = needle_len; i; --i) {
+        hash += *needle_++;
+        hay_hash += *haystack_++;
+    }
+
+    /* iterate over the haystack */
+    haystack_ = (char*)haystack;
+    needle_ = (char*)needle;
+    last = haystack_+(haystack_len - needle_len + 1);
+    for (; haystack_ < last; ++haystack_) {
+        if (__builtin_expect(hash == hay_hash, 0)
+              && *haystack_ == *needle_ /* prevent calling memcmp, was a optimization from existing glibc */
+              && !memcmp (haystack_, needle_, needle_len)) {
+            return haystack_;
+        }
+        /* roll the hash */
+        hay_hash -= *haystack_;
+        hay_hash += *(haystack_+needle_len);
+    }
+    return NULL;
+}
+#endif
 
 PLIST_API int plist_is_binary(const char *plist_data, uint32_t length)
 {
@@ -328,7 +379,7 @@ static plist_t plist_copy_node(node_t *node)
     plist_data_t data = plist_get_data(node);
     plist_data_t newdata = plist_new_plist_data();
 
-    assert(data);				// plist should always have data
+    assert(data);               // plist should always have data
     assert(newdata);
 
     memcpy(newdata, data, sizeof(struct plist_data_s));
@@ -391,7 +442,7 @@ static plist_t plist_copy_node(node_t *node)
 
 PLIST_API plist_t plist_copy(plist_t node)
 {
-    return plist_copy_node(node);
+    return node ? plist_copy_node(node) : NULL;
 }
 
 PLIST_API uint32_t plist_array_get_size(plist_t node)
@@ -471,7 +522,6 @@ PLIST_API void plist_array_set_item(plist_t node, plist_t item, uint32_t n)
             }
         }
     }
-    return;
 }
 
 PLIST_API void plist_array_append_item(plist_t node, plist_t item)
@@ -481,7 +531,6 @@ PLIST_API void plist_array_append_item(plist_t node, plist_t item)
         node_attach(node, item);
         _plist_array_post_insert(node, item, -1);
     }
-    return;
 }
 
 PLIST_API void plist_array_insert_item(plist_t node, plist_t item, uint32_t n)
@@ -491,7 +540,6 @@ PLIST_API void plist_array_insert_item(plist_t node, plist_t item, uint32_t n)
         node_insert(node, n, item);
         _plist_array_post_insert(node, item, (long)n);
     }
-    return;
 }
 
 PLIST_API void plist_array_remove_item(plist_t node, uint32_t n)
@@ -508,7 +556,6 @@ PLIST_API void plist_array_remove_item(plist_t node, uint32_t n)
             plist_free(old_item);
         }
     }
-    return;
 }
 
 PLIST_API void plist_array_item_remove(plist_t node)
@@ -533,7 +580,6 @@ PLIST_API void plist_array_new_iter(plist_t node, plist_array_iter *iter)
         *iter = malloc(sizeof(node_t*));
         *((node_t**)(*iter)) = node_first_child(node);
     }
-    return;
 }
 
 PLIST_API void plist_array_next_item(plist_t node, plist_array_iter iter, plist_t *item)
@@ -553,7 +599,6 @@ PLIST_API void plist_array_next_item(plist_t node, plist_array_iter iter, plist_
         }
         *iter_node = node_next_sibling(*iter_node);
     }
-    return;
 }
 
 PLIST_API uint32_t plist_dict_get_size(plist_t node)
@@ -573,7 +618,6 @@ PLIST_API void plist_dict_new_iter(plist_t node, plist_dict_iter *iter)
         *iter = malloc(sizeof(node_t*));
         *((node_t**)(*iter)) = node_first_child(node);
     }
-    return;
 }
 
 PLIST_API void plist_dict_next_item(plist_t node, plist_dict_iter iter, char **key, plist_t *val)
@@ -602,7 +646,6 @@ PLIST_API void plist_dict_next_item(plist_t node, plist_dict_iter iter, char **k
         }
         *iter_node = node_next_sibling(*iter_node);
     }
-    return;
 }
 
 PLIST_API void plist_dict_get_item_key(plist_t node, char **key)
@@ -698,7 +741,6 @@ PLIST_API void plist_dict_set_item(plist_t node, const char* key, plist_t item)
             }
         }
     }
-    return;
 }
 
 PLIST_API void plist_dict_insert_item(plist_t node, const char* key, plist_t item)
@@ -722,31 +764,30 @@ PLIST_API void plist_dict_remove_item(plist_t node, const char* key)
             plist_free(old_item);
         }
     }
-    return;
 }
 
 PLIST_API void plist_dict_merge(plist_t *target, plist_t source)
 {
-	if (!target || !*target || (plist_get_node_type(*target) != PLIST_DICT) || !source || (plist_get_node_type(source) != PLIST_DICT))
-		return;
+    if (!target || !*target || (plist_get_node_type(*target) != PLIST_DICT) || !source || (plist_get_node_type(source) != PLIST_DICT))
+        return;
 
-	char* key = NULL;
-	plist_dict_iter it = NULL;
-	plist_t subnode = NULL;
-	plist_dict_new_iter(source, &it);
-	if (!it)
-		return;
+    char* key = NULL;
+    plist_dict_iter it = NULL;
+    plist_t subnode = NULL;
+    plist_dict_new_iter(source, &it);
+    if (!it)
+        return;
 
-	do {
-		plist_dict_next_item(source, it, &key, &subnode);
-		if (!key)
-			break;
+    do {
+        plist_dict_next_item(source, it, &key, &subnode);
+        if (!key)
+            break;
 
-		plist_dict_set_item(*target, key, plist_copy(subnode));
-		free(key);
-		key = NULL;
-	} while (1);
-	free(it);	
+        plist_dict_set_item(*target, key, plist_copy(subnode));
+        free(key);
+        key = NULL;
+    } while (1);
+    free(it);
 }
 
 PLIST_API plist_t plist_access_pathv(plist_t plist, uint32_t length, va_list v)
@@ -868,7 +909,7 @@ PLIST_API void plist_get_string_val(plist_t node, char **val)
     assert(length == strlen(*val));
 }
 
-PLIST_API const char *plist_get_string_ptr(plist_t node, uint64_t *length)
+PLIST_API const char* plist_get_string_ptr(plist_t node, uint64_t* length)
 {
     if (!node)
         return NULL;
@@ -878,7 +919,7 @@ PLIST_API const char *plist_get_string_ptr(plist_t node, uint64_t *length)
     plist_data_t data = plist_get_data(node);
     if (length)
         *length = data->length;
-    return (const char *)data->strval;
+    return (const char*)data->strval;
 }
 
 PLIST_API void plist_get_bool_val(plist_t node, uint8_t * val)
@@ -939,7 +980,7 @@ PLIST_API void plist_get_data_val(plist_t node, char **val, uint64_t * length)
     plist_get_type_and_value(node, &type, (void *) val, length);
 }
 
-PLIST_API const char *plist_get_data_ptr(plist_t node, uint64_t *length)
+PLIST_API const char* plist_get_data_ptr(plist_t node, uint64_t* length)
 {
     if (!node || !length)
         return NULL;
@@ -948,7 +989,7 @@ PLIST_API const char *plist_get_data_ptr(plist_t node, uint64_t *length)
         return NULL;
     plist_data_t data = plist_get_data(node);
     *length = data->length;
-    return (const char *)data->buff;
+    return (const char*)data->buff;
 }
 
 PLIST_API void plist_get_date_val(plist_t node, int32_t * sec, int32_t * usec)
@@ -994,7 +1035,7 @@ int plist_data_compare(const void *a, const void *b)
     case PLIST_UID:
         if (val_a->length != val_b->length)
             return FALSE;
-        if (val_a->intval == val_b->intval)	//it is an union so this is sufficient
+        if (val_a->intval == val_b->intval) //it is an union so this is sufficient
             return TRUE;
         else
             return FALSE;
@@ -1036,7 +1077,7 @@ static void plist_set_element_val(plist_t node, plist_type type, const void *val
 {
     //free previous allocated buffer
     plist_data_t data = plist_get_data(node);
-    assert(data);				// a node should always have data attached
+    assert(data);               // a node should always have data attached
 
     switch (data->type)
     {
@@ -1132,3 +1173,181 @@ PLIST_API void plist_set_date_val(plist_t node, int32_t sec, int32_t usec)
     plist_set_element_val(node, PLIST_DATE, &val, sizeof(struct timeval));
 }
 
+PLIST_API int plist_bool_val_is_true(plist_t boolnode)
+{
+    if (!PLIST_IS_BOOLEAN(boolnode)) {
+        return 0;
+    }
+    uint8_t bv = 0;
+    plist_get_bool_val(boolnode, &bv);
+    return (bv == 1);
+}
+
+PLIST_API int plist_uint_val_compare(plist_t uintnode, uint64_t cmpval)
+{
+    if (!PLIST_IS_UINT(uintnode)) {
+        return -1;
+    }
+    uint64_t uintval = 0;
+    plist_get_uint_val(uintnode, &uintval);
+    if (uintval == cmpval) {
+        return 0;
+    } else if (uintval < cmpval) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+PLIST_API int plist_uid_val_compare(plist_t uidnode, uint64_t cmpval)
+{
+    if (!PLIST_IS_UID(uidnode)) {
+        return -1;
+    }
+    uint64_t uidval = 0;
+    plist_get_uid_val(uidnode, &uidval);
+    if (uidval == cmpval) {
+        return 0;
+    } else if (uidval < cmpval) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+PLIST_API int plist_real_val_compare(plist_t realnode, double cmpval)
+{
+    if (!PLIST_IS_REAL(realnode)) {
+        return -1;
+    }
+    double a = 0;
+    double b = cmpval;
+    plist_get_real_val(realnode, &a);
+    double abs_a = fabs(a);
+    double abs_b = fabs(b);
+    double diff = fabs(a - b);
+    if (a == b) {
+        return 0;
+    } else if (a == 0 || b == 0 || (abs_a + abs_b < DBL_MIN)) {
+        if (diff < (DBL_EPSILON * DBL_MIN)) {
+            return 0;
+        } else if (a < b) {
+            return -1;
+        }
+    } else {
+        if ((diff / fmin(abs_a + abs_b, DBL_MAX)) < DBL_EPSILON) {
+            return 0;
+        } else if (a < b) {
+            return -1;
+        }
+    }
+    return 1;
+}
+
+PLIST_API int plist_date_val_compare(plist_t datenode, int32_t cmpsec, int32_t cmpusec)
+{
+    if (!PLIST_IS_DATE(datenode)) {
+        return -1;
+    }
+    int32_t sec = 0;
+    int32_t usec = 0;
+    plist_get_date_val(datenode, &sec, &usec);
+    uint64_t dateval = ((int64_t)sec << 32) | usec;
+    uint64_t cmpval = ((int64_t)cmpsec << 32) | cmpusec;
+    if (dateval == cmpval) {
+        return 0;
+    } else if (dateval < cmpval) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+PLIST_API int plist_string_val_compare(plist_t strnode, const char* cmpval)
+{
+    if (!PLIST_IS_STRING(strnode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(strnode);
+    return strcmp(data->strval, cmpval);
+}
+
+PLIST_API int plist_string_val_compare_with_size(plist_t strnode, const char* cmpval, size_t n)
+{
+    if (!PLIST_IS_STRING(strnode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(strnode);
+    return strncmp(data->strval, cmpval, n);
+}
+
+PLIST_API int plist_string_val_contains(plist_t strnode, const char* substr)
+{
+    if (!PLIST_IS_STRING(strnode)) {
+        return 0;
+    }
+    plist_data_t data = plist_get_data(strnode);
+    return (strstr(data->strval, substr) != NULL);
+}
+
+PLIST_API int plist_key_val_compare(plist_t keynode, const char* cmpval)
+{
+    if (!PLIST_IS_KEY(keynode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(keynode);
+    return strcmp(data->strval, cmpval);
+}
+
+PLIST_API int plist_key_val_compare_with_size(plist_t keynode, const char* cmpval, size_t n)
+{
+    if (!PLIST_IS_KEY(keynode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(keynode);
+    return strncmp(data->strval, cmpval, n);
+}
+
+PLIST_API int plist_key_val_contains(plist_t keynode, const char* substr)
+{
+    if (!PLIST_IS_KEY(keynode)) {
+        return 0;
+    }
+    plist_data_t data = plist_get_data(keynode);
+    return (strstr(data->strval, substr) != NULL);
+}
+
+PLIST_API int plist_data_val_compare(plist_t datanode, const uint8_t* cmpval, size_t n)
+{
+    if (!PLIST_IS_DATA(datanode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(datanode);
+    if (data->length < n) {
+        return -1;
+    } else if (data->length > n) {
+        return 1;
+    }
+    return memcmp(data->buff, cmpval, n);
+}
+
+PLIST_API int plist_data_val_compare_with_size(plist_t datanode, const uint8_t* cmpval, size_t n)
+{
+    if (!PLIST_IS_DATA(datanode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(datanode);
+    if (data->length < n) {
+        return -1;
+    }
+    return memcmp(data->buff, cmpval, n);
+}
+
+PLIST_API int plist_data_val_contains(plist_t datanode, const uint8_t* cmpval, size_t n)
+{
+    if (!PLIST_IS_DATA(datanode)) {
+        return -1;
+    }
+    plist_data_t data = plist_get_data(datanode);
+    return (memmem(data->buff, data->length, cmpval, n) != NULL);
+}

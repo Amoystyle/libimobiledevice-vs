@@ -71,7 +71,7 @@
 
 #define MAC_EPOCH 978307200
 
-#define MAX_DATA_BYTES_PER_LINE(__i) (((76 - (__i << 3)) >> 2) * 3)
+#define MAX_DATA_BYTES_PER_LINE(__i) (((76 - ((__i) << 3)) >> 2) * 3)
 
 static const char XML_PLIST_PROLOG[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
@@ -106,17 +106,14 @@ static size_t dtostr(char *buf, size_t bufsize, double realval)
     size_t len = 0;
     if (isnan(realval)) {
         len = snprintf(buf, bufsize, "nan");
-    }
-    else if (isinf(realval)) {
+    } else if (isinf(realval)) {
         len = snprintf(buf, bufsize, "%cinfinity", (realval > 0.0) ? '+' : '-');
-    }
-    else if (realval == 0.0f) {
+    } else if (realval == 0.0f) {
         len = snprintf(buf, bufsize, "0.0");
-    }
-    else {
+    } else {
         size_t i = 0;
         len = snprintf(buf, bufsize, "%.*g", 17, realval);
-        for (i = 0; i < len; i++) {
+        for (i = 0; buf && i < len; i++) {
             if (buf[i] == ',') {
                 buf[i] = '.';
                 break;
@@ -214,8 +211,7 @@ static void node_to_xml(node_t* node, bytearray_t **outbuf, uint32_t depth)
             struct TM _btime;
             struct TM *btime = gmtime64_r(&timev, &_btime);
             if (btime) {
-                val = (char*)malloc(24);
-                memset(val, 0, 24);
+                val = (char*)calloc(1, 24);
                 struct tm _tmcopy;
                 copy_TM64_to_tm(btime, &_tmcopy);
                 val_len = strftime(val, 24, "%Y-%m-%dT%H:%M:%SZ", &_tmcopy);
@@ -373,8 +369,6 @@ static void node_to_xml(node_t* node, bytearray_t **outbuf, uint32_t depth)
         str_buf_append(*outbuf, ">", 1);
     }
     str_buf_append(*outbuf, "\n", 1);
-
-    return;
 }
 
 static void parse_date(const char *strval, struct TM *btime)
@@ -485,7 +479,7 @@ static void node_estimate_size(node_t *node, uint64_t *size, uint32_t depth)
             *size += (XPLIST_INT_LEN << 1) + 6;
             break;
         case PLIST_REAL:
-            *size += num_digits_i((int64_t)data->realval) + 7;
+            *size += dtostr(NULL, 0, data->realval);
             *size += (XPLIST_REAL_LEN << 1) + 6;
             break;
         case PLIST_DATE:
@@ -540,7 +534,6 @@ PLIST_API void plist_to_xml_free(char *plist_xml)
 {
     free(plist_xml);
 }
-
 
 struct _parse_ctx {
     const char *pos;
@@ -755,7 +748,7 @@ static text_part_t* get_text_parts(parse_ctx ctx, const char* tag, size_t tag_le
         }
     } while (1);
     ctx->pos++;
-    if (ctx->pos >= ctx->end-tag_len || strncmp(ctx->pos, tag, tag_len)) {
+    if (ctx->pos >= ctx->end-tag_len || strncmp(ctx->pos, tag, tag_len) != 0) {
         PLIST_XML_ERR("EOF or end tag mismatch\n");
         ctx->err++;
         return NULL;
@@ -971,7 +964,7 @@ static void node_from_xml(parse_ctx ctx, plist_t *plist)
                 ctx->err++;
                 goto err_out;
             }
-            if (strncmp(ctx->pos, "?>", 2)) {
+            if (strncmp(ctx->pos, "?>", 2) != 0) {
                 PLIST_XML_ERR("Couldn't find <? tag closing marker\n");
                 ctx->err++;
                 goto err_out;
@@ -983,7 +976,7 @@ static void node_from_xml(parse_ctx ctx, plist_t *plist)
             if (((ctx->end - ctx->pos) > 3) && !strncmp(ctx->pos, "!--", 3)) {
                 ctx->pos += 3;
                 find_str(ctx,"-->", 3, 0);
-                if (ctx->pos > ctx->end-3 || strncmp(ctx->pos, "-->", 3)) {
+                if (ctx->pos > ctx->end-3 || strncmp(ctx->pos, "-->", 3) != 0) {
                     PLIST_XML_ERR("Couldn't find end of comment\n");
                     ctx->err++;
                     goto err_out;
@@ -1012,7 +1005,7 @@ static void node_from_xml(parse_ctx ctx, plist_t *plist)
                 }
                 if (embedded_dtd) {
                     find_str(ctx, "]>", 2, 1);
-                    if (ctx->pos > ctx->end-2 || strncmp(ctx->pos, "]>", 2)) {
+                    if (ctx->pos > ctx->end-2 || strncmp(ctx->pos, "]>", 2) != 0) {
                         PLIST_XML_ERR("Couldn't find end of DOCTYPE\n");
                         ctx->err++;
                         goto err_out;
@@ -1148,7 +1141,7 @@ static void node_from_xml(parse_ctx ctx, plist_t *plist)
                             }
                             str++;
                         }
-                        data->intval = strtoull((char*)str, NULL, 0);
+                        data->intval = strtoull(str, NULL, 0);
                         if (is_negative || (data->intval <= INT64_MAX)) {
                             uint64_t v = data->intval;
                             if (is_negative) {
